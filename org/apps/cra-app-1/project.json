@@ -1,0 +1,79 @@
+{
+  "name": "cra-app-1",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/cra-app-1/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "compiler": "babel",
+        "outputPath": "dist/apps/cra-app-1",
+        "index": "apps/cra-app-1/src/index.html",
+        "baseHref": "/",
+        "main": "apps/cra-app-1/src/main.tsx",
+        "tsConfig": "apps/cra-app-1/tsconfig.app.json",
+        "assets": [
+          "apps/cra-app-1/src/favicon.ico",
+          "apps/cra-app-1/src/assets"
+        ],
+        "styles": ["apps/cra-app-1/src/styles.scss"],
+        "scripts": [],
+        "webpackConfig": "apps/cra-app-1/webpack.config.js"
+      },
+      "configurations": {
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true
+        },
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/cra-app-1/src/environments/environment.ts",
+              "with": "apps/cra-app-1/src/environments/environment.prod.ts"
+            }
+          ],
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "cra-app-1:build",
+        "hmr": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "cra-app-1:build:development"
+        },
+        "production": {
+          "buildTarget": "cra-app-1:build:production",
+          "hmr": false
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/cra-app-1/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+}
