@@ -3,10 +3,14 @@ import styles from './app.module.scss';
 
 import NxWelcome from './nx-welcome';
 
+import { SharedButton } from '@org/SharedButton';
+import { SharedComponent } from '@org/SharedComponent';
+
 export function App() {
   return (
     <div>
-      <NxWelcome title="cra-app-1" />
+      <SharedButton label="Shared Button" />
+      <SharedComponent />
     </div>
   );
 }
