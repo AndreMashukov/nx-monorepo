@@ -1,4 +1,5 @@
 {
+  "nxCloud": false,
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
     "build": {
@@ -46,19 +47,21 @@
   "generators": {
     "@nx/react": {
       "application": {
-        "style": "scss",
+        "style": "styled-components",
         "linter": "eslint",
         "bundler": "webpack",
         "babel": true
       },
       "component": {
-        "style": "scss"
+        "style": "styled-components"
       },
       "library": {
-        "style": "scss",
-        "linter": "eslint",
-        "unitTestRunner": "none"
+        "style": "styled-components",
+        "linter": "eslint"
       }
     }
+  },
+  "affected": {
+    "defaultBase": "master"
   }
 }

@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "allowJs": false,
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": true,
+    "strict": true
+  },
+  "files": [],
+  "include": [],
+  "paths": {
+    "hooks/*": ["apps/main/src/app/hooks/*"],
+    "types/*": ["apps/main/src/app/types/*"],
+    "utils/*": ["apps/main/src/app/utils/*"],
+    "API/*": ["apps/main/src/app/API/*"]
+  },
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ],
+  "extends": "../../tsconfig.base.json"
+}

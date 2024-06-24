@@ -10,13 +10,21 @@
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": ["es2020", "dom"],
+    "lib": ["es2020", "dom", "dom.iterable"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@org/SharedButton": ["packages/SharedButton/src/index.ts"],
-      "@org/SharedComponent": ["packages/SharedComponent/src/index.ts"]
+      "API/*": ["apps/main/src/app/API/*"],
+      "Components/*": ["apps/main/src/app/Components/*"],
+      "Helper/*": ["apps/main/src/app/Helper/*"],
+      "constants/*": ["apps/main/src/app/constants/*"],
+      "hooks/*": ["apps/main/src/app/hooks/*"],
+      "layouts/*": ["apps/main/src/app/layouts/*"],
+      "pages/*": ["apps/main/src/app/pages/*"],
+      "store/*": ["apps/main/src/app/store/*"],
+      "types/*": ["apps/main/src/app/types/*"],
+      "util/*": ["apps/main/src/app/util/*"]
     }
   },
   "exclude": ["node_modules", "tmp"]
