@@ -1,0 +1,109 @@
+# aws cloudformation create-stack --stack-name MyFargateApp --template-body file://create-fargate-stack.yaml --capabilities CAPABILITY_NAMED_IAM  --region ap-southeast-1
+# aws cloudformation validate-template --template-body file://create-fargate-stack.yaml
+
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  MyVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: MyVpc
+
+  MySubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVpc
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: ap-southeast-1a
+
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow HTTP traffic"
+      VpcId: !Ref MyVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  MyEcrRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: my-app-repo
+
+  MyEcsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: MyEcsCluster
+
+  MyEcsTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ECSExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  MyEcsTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: my-task-family
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 256
+      Memory: 512
+      ExecutionRoleArn: !GetAtt MyEcsTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: my-container
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/my-app-repo:latest"
+          PortMappings:
+            - ContainerPort: 80
+          Essential: true
+
+  MyEcsService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref MyEcsCluster
+      TaskDefinition: !Ref MyEcsTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      PlatformVersion: "1.4.0"
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref MySubnet1
+          SecurityGroups:
+            - !Ref MySecurityGroup
+
+Outputs:
+  EcrRepositoryUri:
+    Description: "URI of the ECR Repository"
+    Value: !GetAtt
+      - MyEcrRepository
+      - RepositoryUri
+  EcsClusterName:
+    Description: "ECS Cluster Name"
+    Value: !Ref MyEcsCluster

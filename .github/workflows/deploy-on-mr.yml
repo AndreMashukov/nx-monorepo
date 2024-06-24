@@ -1,0 +1,97 @@
+name: Deploy to AWS S3 when PR is created
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: write-all
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "ap-east-1" # Replace with your AWS region
+
+      - name: Create main app S3 bucket
+        run: |
+          if aws s3api head-bucket --bucket "${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy" 2>/dev/null; then
+            echo "Bucket already exists"
+          else
+            aws s3api create-bucket --bucket "${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy" --create-bucket-configuration LocationConstraint=ap-east-1
+            aws s3api put-public-access-block --bucket "${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy" --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+            aws s3api put-bucket-policy --bucket "${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy" --policy '{
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "PublicReadGetObject",
+                  "Effect": "Allow",
+                  "Principal": "*",
+                  "Action": "s3:GetObject",
+                  "Resource": "arn:aws:s3:::${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy/*"
+                }
+              ]
+            }'
+            aws s3 website s3://${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy --index-document index.html --error-document index.html
+          fi
+
+      - name: Create signature app S3 bucket
+        run: |
+          if aws s3api head-bucket --bucket "${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy-signature" 2>/dev/null; then
+          echo "Bucket already exists"
+          else
+            aws s3api create-bucket --bucket "${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy-signature" --create-bucket-configuration LocationConstraint=ap-east-1
+            aws s3api put-public-access-block --bucket "${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy-signature" --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+            aws s3api put-bucket-policy --bucket "${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy-signature" --policy '{
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "PublicReadGetObject",
+                  "Effect": "Allow",
+                  "Principal": "*",
+                  "Action": "s3:GetObject",
+                  "Resource": "arn:aws:s3:::${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy-signature/*"
+                }
+              ]
+            }'
+            aws s3 website s3://${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy-signature --index-document index.html --error-document index.html
+          fi
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build main app
+        run: npm run build:main
+
+      - name: Upload main app build files to main app S3 bucket
+        run: aws s3 sync dist/apps/main/ s3://${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy
+
+      - name: Build signature app
+        run: npm run build:signature
+
+      - name: Upload signature app build files to signature app S3 bucket
+        run: aws s3 sync dist/apps/signature/ s3://${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy-signature
+
+      - name: Comment bucket website endpoints on PR
+        run: |
+          main_app_url="http://${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy.s3-website.ap-east-1.amazonaws.com"
+          signature_app_url="http://${{ github.head_ref }}.${{ github.event.pull_request.number }}.auto-deploy-signature.s3-website.ap-east-1.amazonaws.com"
+          comment_body="Deployed to AWS S3 buckets:\nMain app: $main_app_url\nSignature app: $signature_app_url"
+          api_url="https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
+          curl -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -d "{\"body\":\"$comment_body\"}" "$api_url"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
