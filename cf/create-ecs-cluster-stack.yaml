@@ -131,6 +131,63 @@ Resources:
       VpcId: !Ref MyVpc
       TargetType: ip
 
+  MyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: MyLogGroup
+      RetentionInDays: 14
+
+  MyTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: MyTaskDefinition
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt MyEcsTaskExecutionRole.Arn
+      NetworkMode: awsvpc
+      Cpu: 256
+      Memory: 0.5GB
+      ContainerDefinitions:
+        - Name: my-app
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref MyLogGroup
+              awslogs-region: ap-southeast-1
+              awslogs-stream-prefix: ecs
+          Image: 664947791947.dkr.ecr.ap-southeast-1.amazonaws.com/my-app-repo:latest
+          Essential: true
+          PortMappings:
+            - ContainerPort: 80
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: MyLogGroup
+              awslogs-region: ap-southeast-1
+              awslogs-stream-prefix: ecs
+
+  # MyService:
+  #   Type: AWS::ECS::Service
+  #   DependsOn: MyLoadBalancerListener
+  #   Properties:
+  #     ServiceName: MyService
+  #     Cluster: !Ref MyEcsCluster
+  #     TaskDefinition: !Ref MyTaskDefinition
+  #     DesiredCount: 1
+  #     LaunchType: FARGATE
+  #     NetworkConfiguration:
+  #       AwsvpcConfiguration:
+  #         AssignPublicIp: ENABLED
+  #         Subnets:
+  #           - !Ref MySubnet1
+  #           - !Ref MySubnet2
+  #         SecurityGroups:
+  #           - !Ref MySecurityGroup
+  #     LoadBalancers:
+  #       - TargetGroupArn: !Ref MyTargetGroup
+  #         ContainerName: my-app
+  #         ContainerPort: 80
+
 Outputs:
   EcsClusterName:
     Description: "ECS Cluster Name"
@@ -152,3 +209,9 @@ Outputs:
   LoadBalancerUrl:
     Description: "URL of the load balancer"
     Value: !Sub "http://${MyLoadBalancer.DNSName}"
+  # ServiceName:
+  #   Description: "Service Name"
+  #   Value: !Ref MyService
+  LogGroupName:
+    Description: "Log Group Name"
+    Value: !Ref MyLogGroup
