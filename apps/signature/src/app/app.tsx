@@ -13,7 +13,7 @@ axios.defaults.baseURL = process.env.NX_REACT_APP_BASE_URL;
 axios.defaults.withCredentials = true;
 
 function App() {
-  return <>Signature</>;
+  return <>Signature App</>;
 }
 
 export default App;
