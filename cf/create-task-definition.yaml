@@ -1,5 +1,16 @@
 # aws cloudformation validate-template --template-body file://create-task-definition.yaml
 
+# aws cloudformation create-stack \
+#   --stack-name my-stack \
+#   --template-body file://create-task-definition.yaml \
+#   --parameters \
+#     ParameterKey=EcrRepositoryUri,ParameterValue=664947791947.dkr.ecr.ap-southeast-1.amazonaws.com/my-app-repo \
+#     ParameterKey=EcsClusterName,ParameterValue=MyEcsCluster \
+#     ParameterKey=SecurityGroupId,ParameterValue=sg-0441d5947b89f362e \
+#     ParameterKey=SubnetId,ParameterValue=subnet-0a1f67e33e115de46 \
+#     ParameterKey=TaskExecutionRoleArn,ParameterValue=arn:aws:iam::664947791947:role/MyFargateApp-MyEcsTaskExecutionRole-5tIQxBNxySFQ \
+#   --capabilities CAPABILITY_NAMED_IAM
+
 AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
   EcsClusterName:
@@ -30,7 +41,7 @@ Resources:
       Memory: 512
       ExecutionRoleArn: !Ref TaskExecutionRoleArn
       ContainerDefinitions:
-        - Name: my-container
+        - Name: my-app
           Image: !Ref EcrRepositoryUri
           PortMappings:
             - ContainerPort: 80

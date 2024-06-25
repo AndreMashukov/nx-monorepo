@@ -1,23 +1,31 @@
-# Use an official Node.js runtime as the base image
-FROM node:16
+# Stage 1: Build
+FROM node:16 AS builder
 
-# Set the working directory in the container to /app
 WORKDIR /app
 
-# Copy package.json and package-lock.json into the directory
-COPY package.json package-lock.json ./
+# Copy package.json and package-lock.json
+COPY package*.json ./
+COPY nx.json ./
+COPY tsconfig.base.json ./
 
-# Install the application dependencies
+# Install dependencies
 RUN npm install
 
-# Copy the rest of the application code into the container
+# Copy the rest of the project
 COPY . .
 
-# Build the application
-RUN npm run build:main
+# Build the React project
+RUN npx nx build:main --prod
 
-# Make port 3000 available to the outside of the Docker container
-EXPOSE 3000
+# Stage 2: Serve
+FROM nginx:alpine
 
-# Define the command to run the application
-CMD ["npm", "start"]
+# Copy built files
+COPY --from=builder /app/dist/apps/main /usr/share/nginx/html
+
+# Copy Nginx configuration
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
