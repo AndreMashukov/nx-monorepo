@@ -1,0 +1,13 @@
+# aws cloudformation create-stack --stack-name MyEcrRepo --template-body file://create-ecr-repo-stack.yaml --capabilities CAPABILITY_NAMED_IAM  --region ap-southeast-1
+Resources:
+  MyEcrRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: my-app-repo
+
+Outputs:
+  MyEcrRepositoryUri:
+    Description: The URI of the ECR repository
+    Value: !GetAtt MyEcrRepository.RepositoryUri
+    Export:
+      Name: MyEcrRepositoryUri-Export
