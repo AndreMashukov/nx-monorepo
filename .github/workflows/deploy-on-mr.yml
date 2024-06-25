@@ -39,7 +39,7 @@ jobs:
 
       - name: Update ECS service
         run: |
-          aws ecs update-service --cluster MyEcsCluster --service MyService--force-new-deployment
+          aws ecs update-service --cluster MyEcsCluster --service MyService --force-new-deployment
 
       - name: Comment on PR
         run: |
