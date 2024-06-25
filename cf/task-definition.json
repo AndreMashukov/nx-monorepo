@@ -1,0 +1,25 @@
+{
+  "family": "my-react-app-task",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "my-react-app-container",
+      "image": "664947791947.dkr.ecr.ap-southeast-1.amazonaws.com/my-app-repo:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "memory": 512,
+      "cpu": 256
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::664947791947:role/MyFargateApp-MyEcsTaskExecutionRole-5tIQxBNxySFQ",
+  "taskRoleArn": "arn:aws:iam::664947791947:role/MyFargateApp-MyEcsTaskExecutionRole-5tIQxBNxySFQ"
+}
