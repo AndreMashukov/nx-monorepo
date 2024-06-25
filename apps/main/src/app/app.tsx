@@ -4,7 +4,7 @@ axios.defaults.baseURL = process.env.NX_REACT_APP_BASE_URL;
 axios.defaults.withCredentials = true;
 
 function App() {
-  return <>Main App</>;
+  return <>Main App 999</>;
 }
 
 export default App;

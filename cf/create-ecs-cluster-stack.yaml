@@ -1,7 +1,32 @@
 # aws cloudformation validate-template --template-body file://create-ecs-cluster-stack.yaml
-# aws cloudformation create-stack --stack-name MyEcsCluster --template-body file://create-ecs-cluster-stack.yaml --capabilities CAPABILITY_NAMED_IAM  --region ap-southeast-1
+# aws cloudformation create-stack \
+#   --stack-name MyEcsCluster \
+#   --template-body file://create-ecs-cluster-stack.yaml \
+#   --capabilities CAPABILITY_NAMED_IAM \
+#   --region ap-southeast-1 \
+#   --parameters \
+#     ParameterKey=DockerImage,ParameterValue=664947791947.dkr.ecr.ap-southeast-1.amazonaws.com/my-app-repo:latest \
+#     ParameterKey=Region,ParameterValue=ap-southeast-1 \
+#     ParameterKey=AvailabilityZone1,ParameterValue=ap-southeast-1a \
+#     ParameterKey=AvailabilityZone2,ParameterValue=ap-southeast-1b
 
 AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  DockerImage:
+    Type: String
+    Description: The Docker image to use for the ECS task
+  Region:
+    Type: String
+    Description: The AWS region to deploy the resources in
+    Default: ap-southeast-1
+  AvailabilityZone1:
+    Type: String
+    Description: The first availability zone to use
+    Default: "ap-southeast-1a"
+  AvailabilityZone2:
+    Type: String
+    Description: The second availability zone to use
+    Default: "ap-southeast-1b"
 Resources:
   MyVpc:
     Type: AWS::EC2::VPC
@@ -40,7 +65,7 @@ Resources:
     Properties:
       VpcId: !Ref MyVpc
       CidrBlock: 10.0.1.0/24
-      AvailabilityZone: ap-southeast-1a
+      AvailabilityZone: !Ref AvailabilityZone1
       MapPublicIpOnLaunch: true
 
   MySubnetRouteTableAssociation:
@@ -54,7 +79,7 @@ Resources:
     Properties:
       VpcId: !Ref MyVpc
       CidrBlock: 10.0.2.0/24
-      AvailabilityZone: ap-southeast-1b
+      AvailabilityZone: !Ref AvailabilityZone2
       MapPublicIpOnLaunch: true
 
   MySubnet2RouteTableAssociation:
@@ -89,6 +114,9 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
       Policies:
         - PolicyName: ECSExecutionPolicy
           PolicyDocument:
@@ -153,40 +181,34 @@ Resources:
             LogDriver: awslogs
             Options:
               awslogs-group: !Ref MyLogGroup
-              awslogs-region: ap-southeast-1
+              awslogs-region: !Ref Region
               awslogs-stream-prefix: ecs
-          Image: 664947791947.dkr.ecr.ap-southeast-1.amazonaws.com/my-app-repo:latest
+          Image: !Ref DockerImage
           Essential: true
           PortMappings:
             - ContainerPort: 80
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: MyLogGroup
-              awslogs-region: ap-southeast-1
-              awslogs-stream-prefix: ecs
 
-  # MyService:
-  #   Type: AWS::ECS::Service
-  #   DependsOn: MyLoadBalancerListener
-  #   Properties:
-  #     ServiceName: MyService
-  #     Cluster: !Ref MyEcsCluster
-  #     TaskDefinition: !Ref MyTaskDefinition
-  #     DesiredCount: 1
-  #     LaunchType: FARGATE
-  #     NetworkConfiguration:
-  #       AwsvpcConfiguration:
-  #         AssignPublicIp: ENABLED
-  #         Subnets:
-  #           - !Ref MySubnet1
-  #           - !Ref MySubnet2
-  #         SecurityGroups:
-  #           - !Ref MySecurityGroup
-  #     LoadBalancers:
-  #       - TargetGroupArn: !Ref MyTargetGroup
-  #         ContainerName: my-app
-  #         ContainerPort: 80
+  MyService:
+    Type: AWS::ECS::Service
+    DependsOn: MyLoadBalancerListener
+    Properties:
+      ServiceName: MyService
+      Cluster: !Ref MyEcsCluster
+      TaskDefinition: !Ref MyTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref MySubnet1
+            - !Ref MySubnet2
+          SecurityGroups:
+            - !Ref MySecurityGroup
+      LoadBalancers:
+        - TargetGroupArn: !Ref MyTargetGroup
+          ContainerName: my-app
+          ContainerPort: 80
 
 Outputs:
   EcsClusterName:
@@ -209,9 +231,9 @@ Outputs:
   LoadBalancerUrl:
     Description: "URL of the load balancer"
     Value: !Sub "http://${MyLoadBalancer.DNSName}"
-  # ServiceName:
-  #   Description: "Service Name"
-  #   Value: !Ref MyService
+  ServiceName:
+    Description: "Service Name"
+    Value: !Ref MyService
   LogGroupName:
     Description: "Log Group Name"
     Value: !Ref MyLogGroup
