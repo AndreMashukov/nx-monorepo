@@ -1,5 +1,5 @@
-# aws cloudformation create-stack --stack-name MyFargateApp --template-body file://create-fargate-stack.yaml --capabilities CAPABILITY_NAMED_IAM  --region ap-southeast-1
 # aws cloudformation validate-template --template-body file://create-fargate-stack.yaml
+# aws cloudformation create-stack --stack-name MyFargateApp --template-body file://create-fargate-stack.yaml --capabilities CAPABILITY_NAMED_IAM  --region ap-southeast-1
 
 AWSTemplateFormatVersion: "2010-09-09"
 Resources:
