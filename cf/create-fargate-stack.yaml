@@ -65,39 +65,6 @@ Resources:
                   - logs:PutLogEvents
                 Resource: "*"
 
-  MyEcsTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: my-task-family
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      Cpu: 256
-      Memory: 512
-      ExecutionRoleArn: !GetAtt MyEcsTaskExecutionRole.Arn
-      ContainerDefinitions:
-        - Name: my-container
-          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/my-app-repo:latest"
-          PortMappings:
-            - ContainerPort: 80
-          Essential: true
-
-  MyEcsService:
-    Type: AWS::ECS::Service
-    Properties:
-      Cluster: !Ref MyEcsCluster
-      TaskDefinition: !Ref MyEcsTaskDefinition
-      DesiredCount: 1
-      LaunchType: FARGATE
-      PlatformVersion: "1.4.0"
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          Subnets:
-            - !Ref MySubnet1
-          SecurityGroups:
-            - !Ref MySecurityGroup
-
 Outputs:
   EcrRepositoryUri:
     Description: "URI of the ECR Repository"
@@ -107,3 +74,14 @@ Outputs:
   EcsClusterName:
     Description: "ECS Cluster Name"
     Value: !Ref MyEcsCluster
+  SubnetId:
+    Description: "Subnet ID"
+    Value: !Ref MySubnet1
+  SecurityGroupId:
+    Description: "Security Group ID"
+    Value: !Ref MySecurityGroup
+  TaskExecutionRoleArn:
+    Description: "Task Execution Role ARN"
+    Value: !GetAtt
+      - MyEcsTaskExecutionRole
+      - Arn

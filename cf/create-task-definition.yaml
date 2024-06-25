@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  EcsClusterName:
+    Type: String
+    Description: The name of the ECS Cluster
+  EcrRepositoryUri:
+    Type: String
+    Description: The URI of the ECR Repository
+  SubnetId:
+    Type: String
+    Description: The ID of the subnet
+  SecurityGroupId:
+    Type: String
+    Description: The ID of the security group
+  TaskExecutionRoleArn:
+    Type: String
+    Description: The ARN of the task execution role
+
+Resources:
+  MyEcsTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: my-task-family
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 256
+      Memory: 512
+      ExecutionRoleArn: !Ref TaskExecutionRoleArn
+      ContainerDefinitions:
+        - Name: my-container
+          Image: !Ref EcrRepositoryUri
+          PortMappings:
+            - ContainerPort: 80
+          Essential: true
+
+  MyEcsService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref EcsClusterName
+      TaskDefinition: !Ref MyEcsTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      PlatformVersion: "1.4.0"
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetId
+          SecurityGroups:
+            - !Ref SecurityGroupId
