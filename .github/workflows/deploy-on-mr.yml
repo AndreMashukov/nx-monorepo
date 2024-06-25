@@ -37,6 +37,10 @@ jobs:
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
+      - name: Update ECS service
+        run: |
+          aws ecs update-service --cluster MyEcsCluster --service MyService--force-new-deployment
+
       - name: Comment on PR
         run: |
           comment_body="Commented"
